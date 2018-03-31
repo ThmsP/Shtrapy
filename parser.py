@@ -93,20 +93,59 @@ def rpickle(picke_file, state=None):
 def getUuid(file):
     return uuid5(npd, str(file))
 
+def filter_files(files_unfiltered):
+	files = []
+	print files_unfiltered
+	# print uuid_pickle
+	# global uuid_pickle
+	for fi in files_unfiltered:
+		if str(getUuid(fi)) in uuid_pickle:
+			continue
+		files.append(fi)
+	print files
+	return files
+
+
 def getfiles(results, strava_dir):
     files_unfiltered = strava_dir.files()
     files = []
+    global uuid_pickle
     uuid_pickle = ''
     for track in results :
         uuid_pickle+=str(track['uuid'])
-    for fi in files_unfiltered:
-        toadd = True
-        if str(getUuid(fi)) in uuid_pickle:
-            toadd=False
-            continue
-        if toadd:
-            files.append(fi)
+    print files_unfiltered
+    for li in genericParallel(files_unfiltered, filter_files, 4):
+    	files+=li
+    # for fi in files_unfiltered:
+    #     toadd = True
+    #     if str(getUuid(fi)) in uuid_pickle:
+    #         toadd=False
+    #         continue
+    #     if toadd:
+    #         files.append(fi)
+    print files
     return files
+
+def genericParallel(lst, methd, threads=2):
+    results = []
+    if lst :
+        logger.warning('Running %s ...'%str(methd))
+        pool = multiprocessing.Pool(threads)
+        # results = pool.map(parse_files, files)
+        # global pbar 
+        # pbar = tqdm.tqdm(total=len(files))
+        for x in tqdm.tqdm(pool.imap_unordered(methd, lst), total=len(lst)):
+        # for x in tqdm.tqdm(pool.map_async(parse_files, files), total=len(files)):
+            results.append(x)
+            pass
+        # results = pool.imap_unordered(parse_files, files)
+        pool.close()
+        pool.join()
+        # pbar.close()
+    else :
+        logger.warning('Nothing to do %s'%methd)
+    return results
+
 
 def calculateParallel(files, threads=2):
     results = []
@@ -135,7 +174,7 @@ def load_data_parallel():
 
 	data = rpickle(pickle_file)
 	files = getfiles(data, dirs)
-	data += calculateParallel(files, 4)
+	data += genericParallel(files, load_run_data, 4)
 	return data
 
 
