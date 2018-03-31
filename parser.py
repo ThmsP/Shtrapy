@@ -1,7 +1,7 @@
 import os
 import time
 from path import Path as path
-from glob import glob
+# from glob import glob
 import gpxpy
 from pandas import DataFrame
 
@@ -13,6 +13,9 @@ from uuid import NAMESPACE_DNS as npd
 import logging
 import multiprocessing
 import tqdm
+
+import pygal
+import itertools
 
 #
 FORMAT = 'DEBUG : %(message)s'
@@ -31,9 +34,6 @@ def timefunc(f):
 
 # @timefunc
 def load_run_data(gpx_file, filter=""):
-    # gpx_files = glob(os.path.join(gpx_path, filter + "*.gpx"))
-    # run_data = []
-    # for file_idx, gpx_file in enumerate(gpx_files): 
     gpx = gpxpy.parse(open(gpx_file, 'r'))
     uuid = uuid5(npd, str(gpx_file))
     # Loop through tracks
@@ -46,28 +46,12 @@ def load_run_data(gpx_file, filter=""):
 
     return [uuid, os.path.basename(gpx_file), track_idx, track_name, 
                                  track_time, track_length, track_duration, track_speed]
-        
-        # for seg_idx, segment in enumerate(track.segments):
-            # segment_length = segment.length_3d()
-            # for point_idx, point in enumerate(segment.points):
-                # run_data.append([uuid, os.path.basename(gpx_file), track_idx, track_name, 
-                                 # track_time, track_length, track_duration, track_speed, 
-    #                              seg_idx, segment_length, point.time, point.latitude, 
-    #                              point.longitude, point.elevation, segment.get_speed(point_idx)])
-    # return run_data
 
 
 @timefunc
 def filter_data(data):
-	# df = DataFrame(data, columns=['UUID', 'File_Name', 'Index', 'Name',
-	#                               'Time', 'Length', 'Duration', 'Max_Speed',
-	#                               'Segment_Index', 'Segment_Length', 'Point_Time', 'Point_Latitude',
-	#                               'Point_Longitude', 'Point_Elevation', 'Point_Speed'])
 	df = DataFrame(data, columns=['UUID', 'File_Name', 'Index', 'Name',
 	                              'Time', 'Length', 'Duration', 'Max_Speed'])
-
-	# print df.head(10)
-	# HTML(df.head().to_html(max_cols=4))
 	cols = ['UUID', 'Time', 'Length', 'Duration', 'Max_Speed']
 	tracks = df[cols].copy()
 	tracks['Length'] /= 1e3
@@ -75,13 +59,10 @@ def filter_data(data):
 	tracks['Max_Speed'] *= 3.6
 	tracks['Ave_Speed'] = tracks['Length'] / tracks['Duration']
 	tracks.drop_duplicates(inplace=True)
-	# print tracks.head()
-
 	tracks['Year'] = tracks['Time'].apply(lambda x: x.year)
 	tracks['Month'] = tracks['Time'].apply(lambda x: x.month)
-	tracks_grouped = tracks.groupby(['Year','Month'])
-	# print tracks_grouped.head()
-	return tracks_grouped
+	# tracks_grouped = tracks.groupby(['Year','Month'])
+	return tracks
 
 def rpickle(picke_file, state=None):
     results = []
@@ -93,37 +74,17 @@ def rpickle(picke_file, state=None):
 def getUuid(file):
     return uuid5(npd, str(file))
 
-def filter_files(files_unfiltered):
-	files = []
-	print files_unfiltered
-	# print uuid_pickle
-	# global uuid_pickle
-	for fi in files_unfiltered:
-		if str(getUuid(fi)) in uuid_pickle:
-			continue
-		files.append(fi)
-	print files
-	return files
-
+def filter_files(file_unfiltered):
+    if str(getUuid(file_unfiltered)) not in uuid_pickle:
+        return file_unfiltered
 
 def getfiles(results, strava_dir):
     files_unfiltered = strava_dir.files()
-    files = []
     global uuid_pickle
     uuid_pickle = ''
     for track in results :
         uuid_pickle+=str(track['uuid'])
-    print files_unfiltered
-    for li in genericParallel(files_unfiltered, filter_files, 4):
-    	files+=li
-    # for fi in files_unfiltered:
-    #     toadd = True
-    #     if str(getUuid(fi)) in uuid_pickle:
-    #         toadd=False
-    #         continue
-    #     if toadd:
-    #         files.append(fi)
-    print files
+    files = genericParallel(files_unfiltered, filter_files, 4)
     return files
 
 def genericParallel(lst, methd, threads=2):
@@ -131,40 +92,13 @@ def genericParallel(lst, methd, threads=2):
     if lst :
         logger.warning('Running %s ...'%str(methd))
         pool = multiprocessing.Pool(threads)
-        # results = pool.map(parse_files, files)
-        # global pbar 
-        # pbar = tqdm.tqdm(total=len(files))
         for x in tqdm.tqdm(pool.imap_unordered(methd, lst), total=len(lst)):
-        # for x in tqdm.tqdm(pool.map_async(parse_files, files), total=len(files)):
             results.append(x)
             pass
-        # results = pool.imap_unordered(parse_files, files)
         pool.close()
         pool.join()
-        # pbar.close()
     else :
         logger.warning('Nothing to do %s'%methd)
-    return results
-
-
-def calculateParallel(files, threads=2):
-    results = []
-    if files :
-        logger.warning('Pickle out of date ... updating ...')
-        pool = multiprocessing.Pool(threads)
-        # results = pool.map(parse_files, files)
-        # global pbar 
-        # pbar = tqdm.tqdm(total=len(files))
-        for x in tqdm.tqdm(pool.imap_unordered(load_run_data, files), total=len(files)):
-        # for x in tqdm.tqdm(pool.map_async(parse_files, files), total=len(files)):
-            results.append(x)
-            pass
-        # results = pool.imap_unordered(parse_files, files)
-        pool.close()
-        pool.join()
-        # pbar.close()
-    else :
-        logger.warning('Pickle up-to-date')
     return results
 
 @timefunc
@@ -177,8 +111,67 @@ def load_data_parallel():
 	data += genericParallel(files, load_run_data, 4)
 	return data
 
+def yearStats(data):
+    km_y = data[data.Year == 2018]['Length'].sum()
+    activities_y = len(data[data.Year == 2018])
+    # data_grouped_year = data.groupby(['year'])
+    # km_t = sum([datay['mvlenght'].sum() for year, datay in data_grouped_year])
+    km_t = data['Length'].sum()
+    return km_y, activities_y, km_t
 
-data = load_data_parallel()
-# data = load_run_data(gpx_path='./data/GPX/', filter="")
-print filter_data(data).head()
+def graphs(data):
+    line_chart = pygal.Line(
+        x_label_rotation=30, x_labels_major_count=12, interpolate='cubic')
+    bar_chart = pygal.Bar(x_label_rotation=30, x_labels_major_count=12)
+    box_chart = pygal.Box(x_label_rotation=30, x_labels_major_count=12)
+    data_grouped_year = data.groupby(['year'])
+
+    for year, datagr in data_grouped_year:
+        datagr_m = datagr.groupby(['month'])
+
+        bar_chart.title = 'Km by month by year'
+        bar_chart.x_labels = [i for i, j in datagr_m]
+        bar_chart.add('%s' % year, [{'value': i,
+                                     'label': 'moy/act:%s' % str(j)}
+                                    for i, j in
+                                    itertools.izip(
+                                    datagr_m['mvlenght'].sum(),
+                                    datagr_m['mvlenght'].mean()
+                                    )])
+
+        box_chart.title = 'Km by month by year'
+        box_chart.x_labels = [i for i, j in datagr_m]
+        box_chart.add('%s' % year, [{'value': i,
+                                     'label': 'moy/act:%s' % str(j)}
+                                    for i, j in
+                                    itertools.izip(
+                                    datagr_m['mvlenght'].sum(),
+                                    datagr_m['mvlenght'].mean()
+                                    )])
+
+        line_chart.title = 'Km by month by year'
+        line_chart.x_labels = xrange(1, 13)
+        line_chart.add('%s' % year, datagr_m['mvlenght'].sum().cumsum())
+    bar_chart.render_to_file('./testbar.svg')
+    box_chart.render_to_file('./testbox.svg')
+    line_chart.render_to_file('./testline.svg')
+    figs = [line_chart.render_data_uri(), 
+            bar_chart.render_data_uri(), 
+            box_chart.render_data_uri()]
+    return figs
+
+def globalRun(runtype='test', user='Thomas'):
+    data = load_data_parallel()
+    results = filter_data(data)
+    # print results.head()
+    # print results[results.Year == 2018]
+    stats = yearStats(results)
+    figs  = graphs(results)
+    # print stats
+    return stats, figs
+
+# for year, datag in results: 
+    # print year
+    # print '#######'
+    # print datag
 
