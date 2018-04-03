@@ -1,10 +1,10 @@
 import os
 import time
+import datetime
 from path import Path as path
 # from glob import glob
 import gpxpy
-from pandas import DataFrame
-
+import pandas
 import pickle
 
 from uuid import uuid5
@@ -52,9 +52,12 @@ def load_run_data(gpx_file, filter=""):
         track_length = track.length_3d()
         track_duration = track.get_duration()
         track_speed = track.get_moving_data().max_speed
+        track_uphill, track_downhill = track.get_uphill_downhill()
+        # print "uphill DownHill", track_uphill, track_downhill
 
     return [uuid, gpx_file, track_idx, track_name, 
-                                 track_time, track_length, track_duration, track_speed]
+            track_time, track_length, track_duration, 
+            track_speed, track_uphill, track_downhill]
 
 def leaflet(fname):
     # global uuid_to_file
@@ -75,35 +78,46 @@ def leaflet(fname):
     #
     # Create the map. Save the file to basic_plot.html. _
     # map.html is the  default
-    root, ext = os.path.splitext(__file__)
-    mapfile = root + '.html'
+    # root, ext = os.path.splitext(__file__)
+    # mapfile = 'skeleton/'+root + '.html'
+    mapfile = 'skeleton/parser.html'
     #
     # if 'path' is not specified
     #
-    return mplleaflet.show(path=mapfile)
+    mplleaflet.save_html(fileobj=mapfile)
+    print "Generating mplleaflet map"
+    return 
 
 
 @timefunc
 def filter_data(data):
-	df = DataFrame(data, columns=['UUID', 'File_Name', 'Index', 'Name',
-	                              'Time', 'Length', 'Duration', 'Max_Speed'])
-	cols = ['UUID', 'File_Name', 'Time', 'Length', 'Duration', 'Max_Speed']
-	tracks = df[cols].copy()
-	tracks['Length'] /= 1e3
-	tracks['Duration'] /= 3600
-	tracks['Max_Speed'] *= 3.6
-	tracks['Ave_Speed'] = tracks['Length'] / tracks['Duration']
-	tracks.drop_duplicates(inplace=True)
-	tracks['Year'] = tracks['Time'].apply(lambda x: x.year)
-	tracks['Month'] = tracks['Time'].apply(lambda x: x.month)
-	# tracks_grouped = tracks.groupby(['Year','Month'])
-	return tracks
+    df = pandas.DataFrame(data, columns=['UUID', 'File_Name', 'Index', 'Name',
+	                              'Date', 'Length', 'Duration', 'Max_Speed',
+                                  'UpHill', 'DownHill'])
+    cols = ['UUID', 'File_Name', 'Date', 'Length', 'Duration', 'Max_Speed','UpHill', 'DownHill']
+    tracks = df[cols].copy()
+
+    tracks['Length'] /= 1e3
+    tracks['Duration'] /= 3600 
+    tracks['Time'] = tracks['Duration'].apply(lambda x: datetime.timedelta(seconds=x*3600))
+    tracks['Max_Speed'] *= 3.6
+    tracks['Ave_Speed'] = tracks['Length'] / tracks['Duration']
+    tracks.drop_duplicates(inplace=True)
+    tracks['Year'] = tracks['Date'].apply(lambda x: x.year)
+    tracks['Month'] = tracks['Date'].apply(lambda x: x.month)
+    
+    # tracks['Date']=pandas.to_datetime(tracks.Date)
+    tracks = tracks.sort_values(by='Date', ascending = False)
+    tracks = tracks.round(1)
+    print tracks.head(5)
+    return tracks
 
 def rpickle(picke_file, state=None):
     results = []
     if picke_file.isfile():
         with open(picke_file, 'rb') as read_pickle:
             results += pickle.load(read_pickle)
+    # print results
     return results
 
 def getUuid(file):
@@ -118,12 +132,14 @@ def getfiles(results, strava_dir):
     global uuid_pickle
     uuid_pickle = ''
     for track in results :
-        uuid_pickle+=str(track['uuid'])
+        uuid_pickle+=str(track[0])
     files = genericParallel(files_unfiltered, filter_files, 4)
     return files
 
 def genericParallel(lst, methd, threads=2):
     results = []
+    # print "#####"
+    # print lst
     if lst :
         logger.warning('Running %s ...'%str(methd))
         pool = multiprocessing.Pool(threads)
@@ -134,16 +150,18 @@ def genericParallel(lst, methd, threads=2):
         pool.join()
     else :
         logger.warning('Nothing to do %s'%methd)
-    return results
+
+    return [resnotNone for resnotNone in results if resnotNone is not None]
 
 @timefunc
-def load_data_parallel():
-	dirs = path('./data/GPX')
-	pickle_file = dirs+path('data.pickle')
-
+def load_data_parallel(user):
+	dirs = path('./data/GPX_%s'%user)
+	pickle_file = dirs.parent+path('/data.pickle_%s'%user)
 	data = rpickle(pickle_file)
 	files = getfiles(data, dirs)
 	data += genericParallel(files, load_run_data, 4)
+        with open(pickle_file, 'wb') as saved_pickle:
+            pickle.dump(data, saved_pickle)
 	return data
 
 def yearStats(data):
@@ -187,23 +205,26 @@ def graphs(data):
         line_chart.title = 'Km by month by year'
         line_chart.x_labels = xrange(1, 13)
         line_chart.add('%s' % year, datagr_m['Length'].sum().cumsum())
-    bar_chart.render_to_file('./testbar.svg')
-    box_chart.render_to_file('./testbox.svg')
-    line_chart.render_to_file('./testline.svg')
+    # bar_chart.render_to_file('./testbar.svg')
+    # box_chart.render_to_file('./testbox.svg')
+    # line_chart.render_to_file('./testline.svg')
     figs = [line_chart.render_data_uri(), 
-            bar_chart.render_data_uri(), 
-            box_chart.render_data_uri()]
+            bar_chart.render_data_uri(),]
+            # box_chart.render_data_uri()]
     return figs
 
 def globalRun(runtype='test', user='Thomas'):
-    data = load_data_parallel()
+    data = load_data_parallel(user)
+
+
+
     results = filter_data(data)
     # print results.head()
     # print results[results.Year == 2018]
     stats = yearStats(results)
     figs  = graphs(results)
     # print stats
-    return stats, figs, results.head(5)
+    return stats, figs, results
 
 # for year, datag in results: 
     # print year

@@ -36,6 +36,9 @@
 
   <script>
     function on() {
+      
+      var ifr = document.getElementsByName('Right')[0];
+      ifr.src = ifr.src;
       document.getElementById("overlay").style.display = "block";
     }
 
@@ -48,9 +51,9 @@
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
   <nav>
     <div class="container">
-      <div class="one-third column values-nav u-pull-cente>
+      <div class="one-third column values-nav u-pull-center">
         <form action="" method="post">
-          <button class="button-primary" name="foo" value   Update">Update (last : 20:36)</button>
+          <button class="button-primary" name="foo" value="Update">Update (last : 20:36)</button>
         </form>
       </div>
       <div class="one-third column values-nav u-pull-center">
@@ -117,13 +120,15 @@
   <div class="section values">
     <div id="overlay" class="section" >
        <button onclick="off()" class="button-primary button-close">X</button>
-       <iframe src="/static/parser.html"></iframe>
+       <iframe name="Right" src="/static/parser.html"></iframe>
     </div>
     <div>
       <h2>Test du overlay</h2>
       <button onclick="on()" class="button-primary ">Turn on overlay effect</button>
     </div>
   </div>
+
+  <iframe name="votar" style="display:none;"></iframe>
 
   <div class="section get-help">
     <div class="container">
