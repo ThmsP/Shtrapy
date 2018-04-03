@@ -34,11 +34,40 @@
 </head>
 <body>
 
+  <script>
+    function on() {
+      document.getElementById("overlay").style.display = "block";
+    }
+
+    function off() {
+      document.getElementById("overlay").style.display = "none";
+    }
+  </script>
+
   <!-- Primary Page Layout
   –––––––––––––––––––––––––––––––––––––––––––––––––– -->
+  <nav>
+    <div class="container">
+      <div class="one-third column values-nav u-pull-cente>
+        <form action="" method="post">
+          <button class="button-primary" name="foo" value   Update">Update (last : 20:36)</button>
+        </form>
+      </div>
+      <div class="one-third column values-nav u-pull-center">
+        616km this year ! Shut up legs, keep going !
+      </div>
+      <div class="one-third column values-nav u-pull-center">
+        <meter min="0" low="1000." high="4000." max="{{'%.0f'%km_ym1}}" value="{{'%.0f'%km_y}}"> {{km_y}} kilometers</meter> 
+        {{'%.0f'%km_y}}km this year ! Shut up legs, keep going !
+      </div>
+    </div>
+  </nav>
+
 
   <div class="section values">
+
     <div class="container">
+      
       <div class="row">
         <div class="one-third column value">
           <h2 class="value-multiplier">{{'%.0f'%km_y}}</h2>
@@ -57,7 +86,7 @@
         </script>
         </div>
       </div>
-      Updated : {{date}}
+      
       <form action="" method="post">
       <button class="button-primary" name="foo" value="Update">Update</button>
       </form>
@@ -72,6 +101,30 @@
     </div>
   </div>
 
+   <div class="section get-help">
+    <div class="container">
+      <div class="row">
+        <div class="one-half column value">
+          <iframe src="/static/parser.html"></iframe>
+        </div>
+        <div class="one-half column value">
+          lblblblblb
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section values">
+    <div id="overlay" class="section" >
+       <button onclick="off()" class="button-primary button-close">X</button>
+       <iframe src="/static/parser.html"></iframe>
+    </div>
+    <div>
+      <h2>Test du overlay</h2>
+      <button onclick="on()" class="button-primary ">Turn on overlay effect</button>
+    </div>
+  </div>
+
   <div class="section get-help">
     <div class="container">
       <h3 class="section-heading">Last activities</h3>
@@ -80,7 +133,8 @@
       </div>
     </div>
   </div>
-  <div class="section get-help">
+
+  <div class="section values">
     <div class="container">
       <h3 class="section-heading">A few graphs</h3>
 <!--       <p class="section-description">
