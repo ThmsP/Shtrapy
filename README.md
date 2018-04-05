@@ -2,6 +2,9 @@
 
 For cycling geek and self privacy lovers. This project is less usefull than the original -by far- but it should be useful to monitor the gpx tracks and stats of a few cyclists (there is no authentification). 
 
+[Demo here](https://thmsp.github.io/strapy/)
+
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. --In construction--
