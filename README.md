@@ -1,4 +1,4 @@
-# STRAPY
+# STRAPY :warning: *Wildly unstable* :construction:
 
 For cycling geek and self privacy lovers. This project is less usefull than the original -by far- but it should be useful to monitor the gpx tracks and stats of a few cyclists (there is no authentification). 
 
