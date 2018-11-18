@@ -1,6 +1,8 @@
-import os
+# import os
+import sys
 import time
 import datetime
+from calendar import month_name
 from path import Path as path
 # from glob import glob
 import gpxpy
@@ -18,7 +20,10 @@ import matplotlib.pyplot as plt
 import mplleaflet
 
 import pygal
-import itertools
+# import itertools
+
+import termgraph.termgraph as tgraph
+
 
 #
 FORMAT = 'DEBUG : %(message)s'
@@ -33,7 +38,7 @@ def timefunc(f):
         start = time.time()
         result = f(*args, **kwargs)
         end = time.time()
-        print f.__name__, 'took', end - start, 'time'
+        print(f.__name__, 'took', end - start, 'time')
         return result
     return f_timer
 
@@ -85,7 +90,7 @@ def leaflet(fname):
     # if 'path' is not specified
     #
     mplleaflet.save_html(fileobj=mapfile)
-    print "Generating mplleaflet map"
+    print("Generating mplleaflet map")
     return 
 
 
@@ -109,7 +114,7 @@ def filter_data(data):
     # tracks['Date']=pandas.to_datetime(tracks.Date)
     tracks = tracks.sort_values(by='Date', ascending = False)
     tracks = tracks.round(1)
-    print tracks.head(5)
+    # print(tracks.head(5))
     return tracks
 
 def rpickle(picke_file, state=None):
@@ -155,14 +160,14 @@ def genericParallel(lst, methd, threads=2):
 
 @timefunc
 def load_data_parallel(user):
-	dirs = path('./data/GPX_%s'%user)
-	pickle_file = dirs.parent+path('/data.pickle_%s'%user)
-	data = rpickle(pickle_file)
-	files = getfiles(data, dirs)
-	data += genericParallel(files, load_run_data, 4)
-        with open(pickle_file, 'wb') as saved_pickle:
-            pickle.dump(data, saved_pickle)
-	return data
+    dirs = path('./data/GPX_%s'%user)
+    pickle_file = dirs.parent+path('/data.pickle_%s'%user)
+    data = rpickle(pickle_file)
+    files = getfiles(data, dirs)
+    data += genericParallel(files, load_run_data, 4)
+    with open(pickle_file, 'wb') as saved_pickle:
+        pickle.dump(data, saved_pickle)
+    return data
 
 def yearStats(data):
     km_y = data[data.Year == 2018]['Length'].sum()
@@ -170,7 +175,9 @@ def yearStats(data):
     # data_grouped_year = data.groupby(['year'])
     # km_t = sum([datay['mvlenght'].sum() for year, datay in data_grouped_year])
     km_t = data['Length'].sum()
-    return km_y, activities_y, km_t
+    data_y = data[data.Year == 2018]
+    day_and_km = data_y[['Date', 'Length']].copy()
+    return km_y, activities_y, km_t, day_and_km
 
 def graphs(data):
     line_chart = pygal.Line(
@@ -187,7 +194,7 @@ def graphs(data):
         bar_chart.add('%s' % year, [{'value': i,
                                      'label': 'moy/act:%s' % str(j)}
                                     for i, j in
-                                    itertools.izip(
+                                    zip(
                                     datagr_m['Length'].sum(),
                                     datagr_m['Length'].mean()
                                     )])
@@ -197,13 +204,13 @@ def graphs(data):
         box_chart.add('%s' % year, [{'value': i,
                                      'label': 'moy/act:%s' % str(j)}
                                     for i, j in
-                                    itertools.izip(
+                                    zip(
                                     datagr_m['Length'].sum(),
                                     datagr_m['Length'].mean()
                                     )])
 
         line_chart.title = 'Km by month by year'
-        line_chart.x_labels = xrange(1, 13)
+        line_chart.x_labels = range(1, 13)
         line_chart.add('%s' % year, datagr_m['Length'].sum().cumsum())
     # bar_chart.render_to_file('./testbar.svg')
     # box_chart.render_to_file('./testbox.svg')
@@ -212,6 +219,70 @@ def graphs(data):
             bar_chart.render_data_uri(),]
             # box_chart.render_data_uri()]
     return figs
+
+def termgraphRun(dataF):
+	# oldargv=sys.argv
+	# sys.argv=['termgraph', '--calendar', '--start-dt', '2014-03-01', data]
+	# print(sys.argv)
+	args = {'filename': './test_termgraph.txt', 
+			'title': None, 
+			'width': 50, 
+			'format': '{:<5.2f}', 
+			'suffix': '', 
+			'no_labels': False, 
+			'color': None, 
+			'vertical': False, 
+			'stacked': False, 
+			'different_scale': False, 
+			'calendar': True, 
+			'start_dt': None, 
+			'custom_tick': '', 
+			'delim': '', 
+			'verbose': False, 
+			'version': False}
+
+	data   = [[i] for i in dataF['Length'].tolist()]
+	labels = (dataF['Date'].apply(lambda x: x.strftime('%Y-%m-%d'))).tolist()
+	args1 = args
+	args1['start_dt'] = '2018-01-01'
+
+	sys.stdout.write('\n')
+	sys.stdout.write('########### GRAPHS\n')
+	sys.stdout.write('\n')
+
+	tgraph.calendar_heatmap(data, labels, args1)
+
+	datay  = dataF[dataF.Year == 2018].groupby(['Month'])
+	# print(datay.loc['Length'].sum())
+	labels = []
+	data   = []
+	for key, item in datay:
+		# print(datay.get_group(key), "\n\n")
+		labels.append(month_name[key][:3])
+		data.append([datay.get_group(key)['Length'].sum()])
+
+	sys.stdout.write('\n')
+	sys.stdout.write('\n')
+
+	tgraph.chart(None, data, args, labels)
+
+	sys.stdout.write('\n')
+	sys.stdout.write('########### TOTAL\n')
+	sys.stdout.write('\n')
+
+	ystats = yearStats(dataF)
+	#(km_y, activities_y, km_t, day_and_km)
+	print('Kilometrage    : %s'%ystats[0])
+	print('Nombre sorties : %s'%ystats[1])
+	sys.stdout.write('\n')
+
+
+
+	# data_grouped_year = data.groupby(['Year'])
+	# datagr_m = datagr.groupby(['Month'])
+	
+	# sys.argv=oldargv
+	return
 
 def globalRun(runtype='test', user='Thomas'):
     data = load_data_parallel(user)
@@ -222,12 +293,15 @@ def globalRun(runtype='test', user='Thomas'):
     # print results.head()
     # print results[results.Year == 2018]
     stats = yearStats(results)
+    # print(stats[-1])
     figs  = graphs(results)
+    termgraphRun(results)
     # print stats
     return stats, figs, results
 
-# for year, datag in results: 
-    # print year
-    # print '#######'
-    # print datag
+if __name__ == "__main__":
+	globalRun()
+
+
+ 
 
