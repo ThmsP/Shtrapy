@@ -34,6 +34,9 @@ global uuid_to_file
 uuid_to_file = {}
 
 def timefunc(f):
+"""
+Time profiling
+"""
     def f_timer(*args, **kwargs):
         start = time.time()
         result = f(*args, **kwargs)
@@ -46,6 +49,9 @@ def timefunc(f):
 
 # @timefunc
 def load_run_data(gpx_file, filter=""):
+"""
+Load a gps file and return a list of informations
+"""
     gpx = gpxpy.parse(open(gpx_file, 'r'))
     uuid = uuid5(npd, str(gpx_file))
     global uuid_to_file
@@ -65,6 +71,9 @@ def load_run_data(gpx_file, filter=""):
             track_speed, track_uphill, track_downhill]
 
 def leaflet(fname):
+"""
+Load a gps file and show the track on map with mapleaflet
+"""
     # global uuid_to_file
     # print uuid_to_file
     # gpx_file = uuid_to_file[uuid]
@@ -96,6 +105,9 @@ def leaflet(fname):
 
 @timefunc
 def filter_data(data):
+"""
+Take a list of informations and return a filtered DataFrame
+"""
     df = pandas.DataFrame(data, columns=['UUID', 'File_Name', 'Index', 'Name',
 	                              'Date', 'Length', 'Duration', 'Max_Speed',
                                   'UpHill', 'DownHill'])
@@ -118,6 +130,9 @@ def filter_data(data):
     return tracks
 
 def rpickle(picke_file, state=None):
+"""
+Save the state of the gps file treated
+"""
     results = []
     if picke_file.isfile():
         with open(picke_file, 'rb') as read_pickle:
@@ -129,10 +144,16 @@ def getUuid(file):
     return uuid5(npd, str(file))
 
 def filter_files(file_unfiltered):
+"""
+Compare uuid of a file with the one store in pickle
+"""
     if str(getUuid(file_unfiltered)) not in uuid_pickle:
         return file_unfiltered
 
 def getfiles(results, strava_dir):
+"""
+From a list of file, generate a list of list of informations
+"""
     files_unfiltered = strava_dir.files()
     global uuid_pickle
     uuid_pickle = ''
@@ -142,6 +163,9 @@ def getfiles(results, strava_dir):
     return files
 
 def genericParallel(lst, methd, threads=2):
+"""
+Launch a method in parallel
+"""
     results = []
     # print "#####"
     # print lst
@@ -160,6 +184,10 @@ def genericParallel(lst, methd, threads=2):
 
 @timefunc
 def load_data_parallel(user):
+"""
+Load data from file
+Treatment is made in parallel
+"""
     dirs = path('./data/GPX_%s'%user)
     pickle_file = dirs.parent+path('/data.pickle_%s'%user)
     data = rpickle(pickle_file)
@@ -170,6 +198,9 @@ def load_data_parallel(user):
     return data
 
 def yearStats(data):
+"""
+Return the basics stats of a year
+"""
     km_y = data[data.Year == 2018]['Length'].sum()
     activities_y = len(data[data.Year == 2018])
     # data_grouped_year = data.groupby(['year'])
@@ -180,6 +211,10 @@ def yearStats(data):
     return km_y, activities_y, km_t, day_and_km
 
 def graphs(data):
+"""
+Print the graph of all years using pygal
+Return a list of svg rendered graph
+"""
     line_chart = pygal.Line(
         x_label_rotation=30, x_labels_major_count=12, interpolate='cubic')
     bar_chart = pygal.Bar(x_label_rotation=30, x_labels_major_count=12)
@@ -221,6 +256,9 @@ def graphs(data):
     return figs
 
 def termgraphRun(dataF):
+"""
+Graph in term
+"""
 	# oldargv=sys.argv
 	# sys.argv=['termgraph', '--calendar', '--start-dt', '2014-03-01', data]
 	# print(sys.argv)
@@ -286,17 +324,10 @@ def termgraphRun(dataF):
 
 def globalRun(runtype='test', user='Thomas'):
     data = load_data_parallel(user)
-
-
-
     results = filter_data(data)
-    # print results.head()
-    # print results[results.Year == 2018]
     stats = yearStats(results)
-    # print(stats[-1])
     figs  = graphs(results)
     termgraphRun(results)
-    # print stats
     return stats, figs, results
 
 if __name__ == "__main__":
