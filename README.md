@@ -4,6 +4,18 @@ For cycling geek and self privacy lovers. This project is less usefull than the 
 
 [Demo here](https://thmsp.github.io/strapy/)
 
+## Update 18/01/2019
+
+I added a term interface to quickly run the script and have the result. To use it, simply lauch : 
+
+```
+python parser.py
+```
+
+![termgraph result](./docs/termgraph_result.png)
+
+Under the hood is compatible python3.7. 
+
 
 ## Getting Started
 
@@ -22,6 +34,7 @@ mplleaflet : https://github.com/jwass/mplleaflet
 pandas : https://github.com/pandas-dev/pandas
 matplotlib : https://github.com/matplotlib/matplotlib
 pygal (for now) : https://github.com/Kozea/pygal
+termgraph : https://github.com/mkaz/termgraph
 
 ```
 
@@ -41,6 +54,16 @@ Download this repo :
 ```
 git clone https://github.com/ThmsP/strapy.git
 ```
+
+There is a Pipfile.Lock included, to use it, install pipenv and run this command : 
+
+```
+pipenv --python 3.7
+pipenv install
+pipenv shell 
+```
+
+And here you go, you can run parser.py ! 
 
 
 ## Running the code
