@@ -33,6 +33,7 @@ logger = logging.getLogger('debug')
 global uuid_to_file
 uuid_to_file = {}
 
+# Moved to tools.py
 def timefunc(f):
     """
     Time profiling
@@ -48,6 +49,7 @@ def timefunc(f):
 
 
 # @timefunc
+# Moved to handler.py
 def load_run_data(gpx_file, filter=""):
     """
     Load a gps file and return a list of informations
@@ -70,6 +72,7 @@ def load_run_data(gpx_file, filter=""):
             track_time, track_length, track_duration, 
             track_speed, track_uphill, track_downhill]
 
+# Moved to graph.py
 def leaflet(fname):
     """
     Load a gps file and show the track on map with mapleaflet
@@ -104,6 +107,7 @@ def leaflet(fname):
 
 
 @timefunc
+# Moved to handler.py
 def filter_data(data):
     """
     Take a list of informations and return a filtered DataFrame
@@ -129,6 +133,7 @@ def filter_data(data):
     # print(tracks.head(5))
     return tracks
 
+# Moved to handler.py
 def rpickle(picke_file, state=None):
     """
     Save the state of the gps file treated
@@ -141,9 +146,11 @@ def rpickle(picke_file, state=None):
     # print results
     return results
 
+# Moved to tools.py
 def getUuid(file):
     return uuid5(npd, str(file))
 
+# Moved to handler.py
 def filter_files(file_unfiltered):
     """
     Compare uuid of a file with the one store in pickle
@@ -151,6 +158,7 @@ def filter_files(file_unfiltered):
     if str(getUuid(file_unfiltered)) not in uuid_pickle:
         return file_unfiltered
 
+# Moved to handler.py
 def getfiles(results, strava_dir):
     """
     From a list of file, generate a list of list of informations
@@ -163,6 +171,7 @@ def getfiles(results, strava_dir):
     files = genericParallel(files_unfiltered, filter_files, 4)
     return files
 
+# Moved to tools.py
 def genericParallel(lst, methd, threads=2):
     """
     Launch a method in parallel
@@ -184,6 +193,7 @@ def genericParallel(lst, methd, threads=2):
     return [resnotNone for resnotNone in results if resnotNone is not None]
 
 @timefunc
+# Moved to handler.py
 def load_data_parallel(user):
     """
     Load data from file
@@ -198,6 +208,7 @@ def load_data_parallel(user):
         pickle.dump(data, saved_pickle)
     return data
 
+# Moved to handler.py
 def yearStats(data):
     """
     Return the basics stats of a year
@@ -211,6 +222,7 @@ def yearStats(data):
     day_and_km = data_y[['Date', 'Length']].copy()
     return km_y, activities_y, km_t, day_and_km
 
+# Moved to graph.py
 def graphs(data):
     """
     Print the graph of all years using pygal
@@ -256,6 +268,7 @@ def graphs(data):
             # box_chart.render_data_uri()]
     return figs
 
+# Moved to graph.py
 def termgraphRun(dataF):
     """
     Graph in term
