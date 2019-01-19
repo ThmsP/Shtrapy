@@ -49,7 +49,7 @@ def runBottle(users, runtype='prod'):
         cols = ['Date', 'Length', 'Time', 'Ave_Speed','UpHill', 'Map']
         to_print = head[cols].copy()
         km_ym1 = results[results.Year == 2017]['Length'].sum()
-        print 'km_ym1',km_ym1
+        # print 'km_ym1',km_ym1
         context = {'date': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
                    'images': himage,
                    'km_y': hstats[0],
@@ -67,7 +67,7 @@ def runBottle(users, runtype='prod'):
     @app.route('/:mon_id', method=['POST'])
     def do_update(mon_id):
         
-        print 'do_update'
+        # print 'do_update'
         # pst_rtrn = 'rate'
         # print mon_id
         __user = inv_usr_id[int(mon_id)]
@@ -95,12 +95,12 @@ def runBottle(users, runtype='prod'):
 
     @app.route('/static/<filepath:path>')
     def server_static(filepath):
-        return static_file(filepath, root='./skeleton')
+        return static_file(filepath, root='skeleton')
 
     @app.route('/images/<filename:re:.*\.png>')
     def send_image(filename):
         return static_file(filename,
-                           root='./skeleton/images',
+                           root='skeleton/images',
                            mimetype='image/png')
 
     run(app, host='localhost', port=8080, reloader=True)
@@ -111,8 +111,9 @@ if __name__ == "__main__":
     parser.add_argument("runtype", help="Test or prod")
     # parser.add_argument("user", default='Thomas', help="Test or prod")
     args = parser.parse_args()
-    usr_lst = ['Thomas', 'Elise']
-    # usr_lst = ['Thomas']
+    # usr_lst = ['Thomas', 'Elise']
+
+    usr_lst = ['Thomas']
     usr_dic = {}
     for usr in usr_lst :
       usr_dic[usr] = gpsparse.globalRun(args.runtype, usr)
