@@ -1,5 +1,6 @@
 import datetime
 
+import path
 import gpxpy
 import pandas
 import pickle
@@ -21,7 +22,14 @@ class DataHandler():
     _fi_to_load  = []
 
 
-    def __init__(self,):
+    def __init__(self,gps_path = None, pickle_file = None):
+        if gps_path :
+            self._gps_path = path.Path(gps_path)
+        if pickle_file : 
+            self._pickle_file = path.Path(pickle_file)
+        return 
+
+    def process(self):
         self.rw_pickle('r')
         self.getfiles()
         if not self._data:
@@ -32,13 +40,16 @@ class DataHandler():
         self.rw_pickle('w')
         #After that _data will be remplaced by data_df
         self.convert_data()
-        return 
+        return
+
 
     def load_data(self, gpx_file, filter=""):
         """
         Load a gps file and return a list of informations
         """
-        gpx = gpxpy.parse(open(gpx_file, 'r'))
+        # gpx = None
+        with open(gpx_file, 'r') as gpxf :
+            gpx = gpxpy.parse(gpxf)
         uuid = tools.getUuid(gpx_file)
         # global uuid_to_file              #UNUSED
         # uuid_to_file[str(uuid)]=gpx_file #UNUSED
