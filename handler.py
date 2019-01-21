@@ -16,13 +16,13 @@ class DataHandler():
 
     _gps_path    = config.get_gps_path() #TODO : not ok for multiple user
     _pickle_file = config.get_pickle()  #TODO : same 
-    _data        = None # will be a list
+    _data        = [] # will be a list
     _data_df     = None # will be a dataframe
     _uuid_stored = ''
     _fi_to_load  = []
 
 
-    def __init__(self,gps_path = None, pickle_file = None):
+    def __init__(self, gps_path=None, pickle_file=None):
         if gps_path :
             self._gps_path = path.Path(gps_path)
         if pickle_file : 
@@ -31,9 +31,7 @@ class DataHandler():
 
     def process(self):
         self.rw_pickle('r')
-        self.getfiles()
-        if not self._data:
-            self._data = []
+        self.get_files()
         self._data += tools.genericParallel(self._fi_to_load, 
                                             self.load_data, 
                                             config.num_thread)
@@ -146,7 +144,7 @@ class DataHandler():
             raise AttributeError('rw_pickle() : No state specified')
         return
 
-    def getfiles(self):
+    def get_files(self):
         """
         From a list of file, generate a list of list of informations
         """
