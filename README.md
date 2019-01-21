@@ -4,6 +4,19 @@ For cycling geek and self privacy lovers. This project is less usefull than the 
 
 [Demo here](https://thmsp.github.io/strapy/)
 
+## Update 21/01/2019
+
+New arch for the project : 
+
+shtrapy.py 
+ -handler.py
+  -graph.py
+
+and they use commons tools in ... tools.py
+
+I need to rewrite the wbs.py with the same approch. 
+
+
 ## Update 18/01/2019
 
 I added a term interface to quickly run the script and have the result. To use it, simply lauch : 
@@ -86,6 +99,16 @@ Data/GPX_name
 ```
 
 ### Running
+
+#### New way (21/01/2019)
+
+```
+python shtrapy
+```
+
+Will produce the term graphs
+
+#### Old way
 
 ```
 python wbs.py test

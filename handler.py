@@ -10,6 +10,7 @@ import pickle
 import tools
 import config
 
+import logging
 
 class DataHandler():
 
@@ -46,6 +47,7 @@ class DataHandler():
         Load a gps file and return a list of informations
         """
         # gpx = None
+        logging.info('In load_data')
         with open(gpx_file, 'r') as gpxf :
             gpx = gpxpy.parse(gpxf)
         uuid = tools.getUuid(gpx_file)
@@ -172,7 +174,7 @@ class DataHandler():
     
     
 
-    def yearStats(self, year):
+    def year_stats(self, year):
         """
         Return the basics stats of a year
         """
@@ -184,6 +186,8 @@ class DataHandler():
         data_y = self._data_df[self._data_df.Year == 2018]
         day_and_km = data_y[['Date', 'Length']].copy()
         return km_y, activities_y, km_t, day_and_km
+
+
 
 if __name__ == "__main__":
     test = DataHandler()

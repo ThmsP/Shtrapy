@@ -51,6 +51,23 @@ def test_load_data(create_DataHandler):
     # print(data)
     assert len(set(data)) == len(data)
 
+def test_write_pickle(create_DataHandler):
+    clean_pickle()
+    create_DataHandler.get_files()
+    for fi in create_DataHandler._fi_to_load:
+        create_DataHandler._data += create_DataHandler.load_data(fi)
+    create_DataHandler.rw_pickle('w')
+
+def test_read_pickle(create_DataHandler):
+    # Data from scratch
+    create_DataHandler.get_files()
+    data = []
+    for fi in create_DataHandler._fi_to_load:
+        data += create_DataHandler.load_data(fi)
+    # Read the pickle
+    create_DataHandler.rw_pickle('r')
+    assert data == create_DataHandler._data
+
 
 
 
